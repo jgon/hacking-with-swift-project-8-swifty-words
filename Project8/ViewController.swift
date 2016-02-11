@@ -32,7 +32,7 @@ class ViewController: UIViewController {
             btn.addTarget(self, action: "letterTapped:", forControlEvents: .TouchUpInside)
         }
         
-        loadLevel()
+        loadLevel(nil)
     }
 
     override func didReceiveMemoryWarning() {
@@ -41,12 +41,37 @@ class ViewController: UIViewController {
     }
 
     @IBAction func submitTapped(sender: AnyObject) {
+        if let solutionPosition = solutions.indexOf(currentAnswer.text!) {
+            activatedButtons.removeAll()
+            
+            var splitCues = answerLabel.text!.componentsSeparatedByString("\n")
+            
+            splitCues[solutionPosition] = currentAnswer.text!
+            answerLabel.text = splitCues.joinWithSeparator("\n")
+            
+            currentAnswer.text = ""
+            score += 1
+            
+            if score % 7 == 0 {
+                let alertController = UIAlertController(title: "Well done!", message: "Are you ready for the next level?", preferredStyle: .Alert)
+                alertController.addAction(UIAlertAction(title: "Let's go", style: .Default, handler:
+                    { [unowned self] (action: UIAlertAction) -> Void in
+                        self.loadLevel(action)
+                    }))
+                presentViewController(alertController, animated: true, completion: nil)
+            }
+        }
     }
 
     @IBAction func clearTapped(sender: AnyObject) {
+        currentAnswer.text = ""
+        for button in activatedButtons {
+            button.hidden = false
+        }
+        activatedButtons.removeAll()
     }
     
-    func loadLevel() {
+    func loadLevel(action: UIAlertAction?) {
         var clueString = ""
         var solutionString = ""
         var letterBits = [String]()
@@ -86,6 +111,23 @@ class ViewController: UIViewController {
             for i in 0 ..< letterBits.count {
                 letterButtons[i].setTitle(letterBits[i], forState: .Normal)
             }
+        }
+    }
+    
+    func letterTapped(button: UIButton) {
+        currentAnswer.text = currentAnswer.text! + button.titleLabel!.text!
+        activatedButtons.append(button)
+        button.hidden = true
+    }
+    
+    func levelUp() {
+        level += 1
+        solutions.removeAll(keepCapacity: true)
+        
+        loadLevel(nil)
+        
+        for button in letterButtons {
+            button.hidden = false
         }
     }
 }
